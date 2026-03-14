@@ -6,6 +6,27 @@ function datef() {
     date "+%a %b %-d %T %Y"
 }
 
+function initPKI() {
+    echo "$(datef) Initializing PKI..."
+
+    mkdir -p "$APP_PERSIST_DIR"
+    cd "$APP_PERSIST_DIR"
+
+    easyrsa init-pki
+    easyrsa build-ca nopass
+    easyrsa build-server-full MyReq nopass
+    easyrsa gen-dh
+    openvpn --genkey secret /etc/openvpn/ta.key
+
+    cp pki/issued/MyReq.crt \
+       pki/private/MyReq.key \
+       pki/ca.crt \
+       pki/dh.pem \
+       /etc/openvpn/
+
+    echo "$(datef) PKI initialized successfully."
+}
+
 function createConfig() {
     cd "$APP_PERSIST_DIR"
     CLIENT_ID="$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)"
